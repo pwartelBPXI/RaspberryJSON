@@ -1,0 +1,791 @@
+[
+    {
+        "id": "c55952f9a2e6f5ad",
+        "type": "tab",
+        "label": "Emitter",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "116cae3ca980f270",
+        "type": "udp in",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Centrale Exocet Silver",
+        "iface": "",
+        "port": "1034",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 180,
+        "y": 740,
+        "wires": [
+            [
+                "f63b6eb9bc8ba0f2"
+            ]
+        ]
+    },
+    {
+        "id": "f63b6eb9bc8ba0f2",
+        "type": "switch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Routeur de Trames NMEA",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "$IIVHW",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "$IIMWD",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "$HCHDT",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "$IIMWV",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 4,
+        "x": 440,
+        "y": 740,
+        "wires": [
+            [
+                "2e33fc990821c8a5"
+            ],
+            [
+                "a0dc19f123f4d7dc"
+            ],
+            [
+                "2d40697a636a6749"
+            ],
+            [
+                "554bea6df05537bb"
+            ]
+        ]
+    },
+    {
+        "id": "fe1de246d68f96df",
+        "type": "join",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Array For Indexing",
+        "mode": "auto",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 990,
+        "y": 880,
+        "wires": [
+            [
+                "033a522b0a0b778f"
+            ]
+        ]
+    },
+    {
+        "id": "4f1f76573c4e4f98",
+        "type": "batch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "True Wind Buffer",
+        "mode": "count",
+        "count": "2",
+        "overlap": 0,
+        "interval": "8",
+        "allowEmptySequence": false,
+        "topics": [],
+        "x": 770,
+        "y": 880,
+        "wires": [
+            [
+                "fe1de246d68f96df"
+            ]
+        ]
+    },
+    {
+        "id": "033a522b0a0b778f",
+        "type": "function",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre ",
+        "func": "\nfor (let i = 0; i < msg.payload.length ; i++){\n    for (let j = i + 1; j < msg.payload.length ; j++){\n        if (msg.payload[i] != msg.payload[j]){\n            var output = { payload:msg.payload[j] };\n            return output;\n        }\n       \n    }\n    \n}\n\n// Do NOT put return msg HERE !!!!!",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1210,
+        "y": 880,
+        "wires": [
+            [
+                "4f1f76573c4e4f98",
+                "bec5eca04c2f5c34"
+            ]
+        ]
+    },
+    {
+        "id": "6d387d4495716732",
+        "type": "mqtt out",
+        "z": "c55952f9a2e6f5ad",
+        "name": "CentraleMQTTOut",
+        "topic": "CentraleMQTTOut",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d8f5182d.3296f8",
+        "x": 1650,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "1af395e114d36b2a",
+        "type": "file",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Centrale Logger",
+        "filename": "/home/pi/Documents/LogsNav/CentraleLoggerRepetitions.txt",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1700,
+        "y": 960,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ea86ded645b641d4",
+        "type": "function",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Log Temps + Payload",
+        "func": "var m_names = new Array(\"January\", \"February\", \"March\", \n\"April\", \"May\", \"June\", \"July\", \"August\", \"September\", \n\"October\", \"November\", \"December\");\n\nvar mydate = new Date();\nvar curr_date = mydate.getDate();\nvar curr_month = mydate.getMonth()+ 1; // Because the array starts from 0\nvar curr_year = mydate.getFullYear();\n\nvar mydatestr = '' + curr_year  + '-' +\ncurr_month + '-' + \ncurr_date+ ' ' +\nmydate.getHours() + ':' +\nmydate.getMinutes() + ':' + \nmydate.getSeconds() + '.' + \nmydate.getMilliseconds()\n\n\n\n\nmsg.payload = mydatestr + \"{\" + msg.payload\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1660,
+        "y": 840,
+        "wires": [
+            [
+                "1af395e114d36b2a"
+            ]
+        ]
+    },
+    {
+        "id": "8ab3934f86fa40c8",
+        "type": "link in",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "links": [
+            "bec5eca04c2f5c34"
+        ],
+        "x": 1455,
+        "y": 740,
+        "wires": [
+            [
+                "6d387d4495716732",
+                "ea86ded645b641d4"
+            ]
+        ]
+    },
+    {
+        "id": "bec5eca04c2f5c34",
+        "type": "link out",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "links": [
+            "8ab3934f86fa40c8"
+        ],
+        "x": 1375,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "2d40697a636a6749",
+        "type": "batch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "$HCHDT Buffer",
+        "mode": "count",
+        "count": "1",
+        "overlap": 0,
+        "interval": "8",
+        "allowEmptySequence": false,
+        "topics": [],
+        "x": 780,
+        "y": 740,
+        "wires": [
+            [
+                "cf8846aa6a7bff8d"
+            ]
+        ]
+    },
+    {
+        "id": "cf8846aa6a7bff8d",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "2",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 1040,
+        "y": 740,
+        "wires": [
+            [
+                "bec5eca04c2f5c34"
+            ]
+        ]
+    },
+    {
+        "id": "2e33fc990821c8a5",
+        "type": "batch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "$IIVHW Buffer ",
+        "mode": "count",
+        "count": "1",
+        "overlap": 0,
+        "interval": "8",
+        "allowEmptySequence": false,
+        "topics": [],
+        "x": 780,
+        "y": 500,
+        "wires": [
+            [
+                "1179b448d4b4e1cb"
+            ]
+        ]
+    },
+    {
+        "id": "1179b448d4b4e1cb",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "2",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 1040,
+        "y": 500,
+        "wires": [
+            [
+                "bec5eca04c2f5c34"
+            ]
+        ]
+    },
+    {
+        "id": "a0dc19f123f4d7dc",
+        "type": "batch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "$IIMWD Buffer",
+        "mode": "count",
+        "count": "1",
+        "overlap": 0,
+        "interval": "8",
+        "allowEmptySequence": false,
+        "topics": [],
+        "x": 780,
+        "y": 620,
+        "wires": [
+            [
+                "dd405b8401217627"
+            ]
+        ]
+    },
+    {
+        "id": "dd405b8401217627",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "2",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 1040,
+        "y": 620,
+        "wires": [
+            [
+                "bec5eca04c2f5c34"
+            ]
+        ]
+    },
+    {
+        "id": "e2c204918d65dbf1",
+        "type": "udp in",
+        "z": "c55952f9a2e6f5ad",
+        "name": "GPS Exocet Silver",
+        "iface": "",
+        "port": "1036",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 150,
+        "y": 1160,
+        "wires": [
+            [
+                "239db8e4fc23546c"
+            ]
+        ]
+    },
+    {
+        "id": "239db8e4fc23546c",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "2",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 400,
+        "y": 1160,
+        "wires": [
+            [
+                "0500dc7f1d8eaab0",
+                "d1b6208616406aca",
+                "ca23863ad3eee8e8"
+            ]
+        ]
+    },
+    {
+        "id": "0500dc7f1d8eaab0",
+        "type": "mqtt out",
+        "z": "c55952f9a2e6f5ad",
+        "name": "GPSMQTTOut",
+        "topic": "GPSMQTTOut",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d8f5182d.3296f8",
+        "x": 640,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "649e85f638fb66c8",
+        "type": "file",
+        "z": "c55952f9a2e6f5ad",
+        "name": "GPS Logger",
+        "filename": "/home/pi/Documents/LogsNav/CentraleLogger.txt",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 950,
+        "y": 1240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d1b6208616406aca",
+        "type": "function",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Log Temps + Payload",
+        "func": "// A vérifier : \n// Peut-on supprimer le array m_names ? \nvar m_names = new Array(\"January\", \"February\", \"March\", \n\"April\", \"May\", \"June\", \"July\", \"August\", \"September\", \n\"October\", \"November\", \"December\");\n\n// Sur Javascript la fonction new Date() récupère la date qui figure sur l'horloge du Raspberry \n// Cette fonction retourne le string suivant par exemple: \n// Wed Mar 25 2015 01:00:00 GMT+0100 (Central European Standard Time)\n// Ce dernier est difficilement exploitable \nvar mydate = new Date();\nvar curr_date = mydate.getDate();\nvar curr_month = mydate.getMonth()+ 1; // In JavaScript, the first month (January) is month number 0\nvar curr_year = mydate.getFullYear();\n\n// Création de MON format d'horaire \nvar mydatestr = '' + curr_year  + '-' +\ncurr_month + '-' + \ncurr_date+ ' ' +\nmydate.getHours() + ':' +\nmydate.getMinutes() + ':' + \nmydate.getSeconds() + '.' + \nmydate.getMilliseconds()\n\n// Sortie : \n// 2015-03-25 01:00:00\n\n\n// Formatage du message transmit\n// Le symbole { permettra par la suite de 'split' le string en 2 colonnes par exemple\n// Une solution plus elegante serait d'utiliser un dictionnaire ? Voir ci dessous \n// msg.payload = {date: mydatestr, payload: msg.payload};\n\n\nmsg.payload = mydatestr + \"{\" + msg.payload // Output = string \nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 1240,
+        "wires": [
+            [
+                "649e85f638fb66c8"
+            ]
+        ]
+    },
+    {
+        "id": "8afad7f451492e11",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Envoie Trames GPS",
+        "info": "",
+        "x": 150,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "e5e174b1f83b2d5a",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Envoie Trames Centrale",
+        "info": "",
+        "x": 180,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "c74599eae3b5c025",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre Temps",
+        "info": "",
+        "x": 930,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "522597fc9c3494f4",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre Temps",
+        "info": "",
+        "x": 410,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "20f6a4c4b8deecd2",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre Répétitions",
+        "info": "",
+        "x": 940,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "554bea6df05537bb",
+        "type": "switch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Routeur de Trames $IIMWV",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": ",T,",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": ",R,",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 460,
+        "y": 920,
+        "wires": [
+            [
+                "4f1f76573c4e4f98"
+            ],
+            [
+                "86e25be5ab4f5ced"
+            ]
+        ]
+    },
+    {
+        "id": "78cabf0af6e745a4",
+        "type": "join",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Array For Indexing",
+        "mode": "auto",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 990,
+        "y": 960,
+        "wires": [
+            [
+                "15092bb781f55a34"
+            ]
+        ]
+    },
+    {
+        "id": "86e25be5ab4f5ced",
+        "type": "batch",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Relat Wind Buffer",
+        "mode": "count",
+        "count": "2",
+        "overlap": 0,
+        "interval": "8",
+        "allowEmptySequence": false,
+        "topics": [],
+        "x": 770,
+        "y": 960,
+        "wires": [
+            [
+                "78cabf0af6e745a4"
+            ]
+        ]
+    },
+    {
+        "id": "15092bb781f55a34",
+        "type": "function",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre ",
+        "func": "\nfor (let i = 0; i < msg.payload.length ; i++){\n    for (let j = i + 1; j < msg.payload.length ; j++){\n        if (msg.payload[i] != msg.payload[j]){\n            var output = { payload:msg.payload[j] };\n            return output;\n        }\n       \n    }\n    \n}\n\n// Do NOT put return msg HERE !!!!!",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1210,
+        "y": 960,
+        "wires": [
+            [
+                "86e25be5ab4f5ced",
+                "bec5eca04c2f5c34"
+            ]
+        ]
+    },
+    {
+        "id": "04d55b3e13582790",
+        "type": "udp in",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Donnees XDR Greement",
+        "iface": "",
+        "port": "1035",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 190,
+        "y": 1460,
+        "wires": [
+            [
+                "6eda2ce95539685c"
+            ]
+        ]
+    },
+    {
+        "id": "4f7253039e988dc3",
+        "type": "udp in",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Donnees XDR Environnement",
+        "iface": "",
+        "port": "1045",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 180,
+        "y": 1620,
+        "wires": [
+            [
+                "77b69328c1c5f1fa"
+            ]
+        ]
+    },
+    {
+        "id": "6eda2ce95539685c",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "8",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 520,
+        "y": 1460,
+        "wires": [
+            [
+                "2e50ab6e4ea05042"
+            ]
+        ]
+    },
+    {
+        "id": "2e50ab6e4ea05042",
+        "type": "mqtt out",
+        "z": "c55952f9a2e6f5ad",
+        "name": "XDRGreementMQTTOut",
+        "topic": "XDRGreementMQTTOut",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d8f5182d.3296f8",
+        "x": 830,
+        "y": 1460,
+        "wires": []
+    },
+    {
+        "id": "de7c8c21fc71a6cb",
+        "type": "comment",
+        "z": "c55952f9a2e6f5ad",
+        "name": "Filtre Temps",
+        "info": "",
+        "x": 530,
+        "y": 1380,
+        "wires": []
+    },
+    {
+        "id": "77b69328c1c5f1fa",
+        "type": "delay",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "8",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": true,
+        "x": 520,
+        "y": 1620,
+        "wires": [
+            [
+                "70229e3a5bc05d6d"
+            ]
+        ]
+    },
+    {
+        "id": "70229e3a5bc05d6d",
+        "type": "mqtt out",
+        "z": "c55952f9a2e6f5ad",
+        "name": "XDREnvironnementMQTTOut",
+        "topic": "XDREnvironnementMQTTOut",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d8f5182d.3296f8",
+        "x": 790,
+        "y": 1620,
+        "wires": []
+    },
+    {
+        "id": "ca23863ad3eee8e8",
+        "type": "debug",
+        "z": "c55952f9a2e6f5ad",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 630,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "d8f5182d.3296f8",
+        "type": "mqtt-broker",
+        "name": "HiveMQ",
+        "broker": "adb72c5db88b4aeb8a3d96ad3b5c074d.s1.eu.hivemq.cloud",
+        "port": "8883",
+        "tls": "e48656f36231fcdc",
+        "clientid": "",
+        "usetls": true,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "sessionExpiry": ""
+    },
+    {
+        "id": "e48656f36231fcdc",
+        "type": "tls-config",
+        "name": "",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": true,
+        "alpnprotocol": ""
+    }
+]
